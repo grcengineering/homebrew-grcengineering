@@ -17,14 +17,14 @@ class Nthpartyfinder < Formula
   if OS.mac?
     if Hardware::CPU.arm?
       url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.4.0/nthpartyfinder-aarch64-apple-darwin.tgz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+      sha256 "2b214219aaa6a074e0d8933b1f448eacbcbb66c435bba3ce8e0f991c89640bd0"
     else
       url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.4.0/nthpartyfinder-x86_64-apple-darwin.tgz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+      sha256 "4a28b57cde7bb0a655fa24ab7a85e2bf1af1b0911e1e0509e1cc0245e9bde338"
     end
   elsif OS.linux?
     url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.4.0/nthpartyfinder-x86_64-unknown-linux-gnu.tgz"
-    sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+    sha256 "e42a07acbd52a5f1af451cd9c39b3db05c8a9d60f81949c9c4671e7d2a653955"
   end
 
   def install
