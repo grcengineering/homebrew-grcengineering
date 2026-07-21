@@ -1,0 +1,72 @@
+# sscsb default SAST ruleset (Semgrep-compatible — runs under OpenGrep and
+# Semgrep identically). Deliberately small: high-signal supply-chain patterns
+# that make sense for EVERY repo. Point `controls.sast.rules` at "auto" to use
+# the full Semgrep registry instead.
+rules:
+  - id: sscsb.curl-pipe-shell
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      Piping a remote script directly into a shell executes unverified code —
+      download, checksum/signature-verify, then execute.
+    patterns:
+      - pattern-either:
+          - pattern-regex: 'curl[^|;\n]*\|\s*(sudo\s+)?(ba|z|da)?sh'
+          - pattern-regex: 'wget[^|;\n]*\|\s*(sudo\s+)?(ba|z|da)?sh'
+    # `*.rb` added for this tap. A formula's install/test blocks run arbitrary
+    # shell on the user's machine, so `curl … | sh` hidden in a formula is the
+    # highest-value injection point in this repo. sscsb's stock rule ships
+    # without it, which would have left this repo's only source language
+    # unscanned by its own highest-severity rule.
+    paths:
+      include: ["*.sh", "*.bash", "*.zsh", "Makefile", "*.yml", "*.yaml", "*.rb"]
+
+  - id: sscsb.git-protocol-insecure
+    languages: [generic]
+    severity: WARNING
+    message: >-
+      Insecure git:// or http:// remote — use https:// or ssh:// so the
+      transport is authenticated.
+    pattern-regex: '(git|http)://[a-zA-Z0-9.-]+/[^\s"]+\.git'
+
+  - id: sscsb.npm-install-ignore-scripts-missing
+    languages: [generic]
+    severity: WARNING
+    message: >-
+      CI npm installs should use `npm ci --ignore-scripts` unless install
+      scripts are specifically required (install-script malware vector).
+    pattern-regex: 'npm install(?! .*--ignore-scripts)[^\n]*'
+    paths:
+      include: ["*.yml", "*.yaml"]
+
+  - id: sscsb.hardcoded-home-path
+    languages: [generic]
+    severity: WARNING
+    message: Hardcoded user home path reduces portability and can leak usernames.
+    pattern-regex: '/(Users|home)/[a-z0-9_-]+/'
+    paths:
+      include: ["*.sh", "*.yml", "*.yaml", "*.toml", "*.rb"]
+
+  # ── tap-specific rules (not part of the sscsb stock set) ──
+
+  - id: tap.formula-insecure-download-url
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      Formula download URL is not https. Homebrew checks the sha256 after
+      download, but plaintext transport lets a network attacker observe and
+      shape the request; a release asset URL has no reason to be http://.
+    pattern-regex: '^\s*url\s+"http://'
+    paths:
+      include: ["*.rb"]
+
+  - id: tap.formula-head-spec
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A `head` spec installs from a mutable branch, bypassing sha256 pinning and
+      provenance verification entirely. This tap distributes only pinned,
+      provenance-verified release artifacts.
+    pattern-regex: '^\s*head\s'
+    paths:
+      include: ["*.rb"]

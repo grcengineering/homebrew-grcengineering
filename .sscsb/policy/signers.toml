@@ -1,0 +1,27 @@
+# sscsb approved-signers policy for the GRC Engineering Homebrew tap.
+#
+# Humans, CI, and AI agents must NEVER share keys or identities. Only signers
+# listed here can push to protected branches, and only `class = "human"`
+# signers satisfy the human-only protected-branch signing policy.
+#
+# This matters more here than in a normal repo. A tap is a distribution
+# channel: a commit that lands on `main` changes what `brew install` puts on
+# users' machines. A formula bump is a two-line diff — a `url` and a `sha256` —
+# which is exactly the diff an attacker wants merged and exactly the diff that
+# looks most boring to a reviewer. Requiring a hardware-backed human signature
+# on every such commit is the control that makes an automated path, or a stolen
+# credential, insufficient on its own.
+#
+# AI agents draft changes here; they do not sign them. The `agent-signing`
+# control is off, so no `class = "ai"` key is emitted into allowed_signers at
+# all — an AI signature cannot be made verification-valid on this repo no
+# matter how this file is edited.
+
+[[signer]]
+principal = "10093271+p4gs@users.noreply.github.com"
+class = "human"
+# Apple Secure Enclave via Secretive. The private key is non-exportable and
+# every signature requires a physical Touch ID tap, so a signed commit here
+# carries evidence that a specific human was present at signing time.
+hardware_backed = true
+ssh_public_key = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJ6+H5pdok/8I/b+254AhexNJmkzfwCI7wnBqi6LLwkKIHLxcjy9ADFYuhK9fvKKshsu9Ld2e0YRs8BbvF4zUHM= Git-Signing@secretive.mbp.local"

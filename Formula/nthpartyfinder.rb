@@ -7,10 +7,19 @@
 # exists (placeholders fail `brew install`/`brew audit` loudly, which is the correct
 # failure mode for a placeholder rather than silently installing garbage).
 class Nthpartyfinder < Formula
-  desc "CLI tool for identifying Nth party vendor relationships through DNS analysis"
+  desc "Identify Nth-party vendor relationships through DNS analysis"
   homepage "https://grc.engineering"
-  version "1.4.0"
   license "MIT"
+
+  # Lets `brew livecheck` and bump tooling see new upstream versions. The Git
+  # strategy reads tags directly rather than scraping the releases page, which
+  # Homebrew prefers: not rate-limited, and a pre-release cannot push the current
+  # stable off the first page of results.
+  livecheck do
+    url :stable
+    strategy :git
+    regex(/^v?(\d+(?:\.\d+)+)$/i)
+  end
 
   depends_on "whois"
 
@@ -39,7 +48,7 @@ class Nthpartyfinder < Formula
         brew install --cask google-chrome
 
       For subdomain discovery (--enable-subdomain-discovery):
-        go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+        brew install subfinder
     EOS
   end
 

@@ -1,0 +1,27 @@
+# The only dependency surface this repository has of its own is the set of
+# GitHub Actions its workflows call. Those actions are pinned to full commit
+# SHAs — which is the correct supply-chain posture (cf. tj-actions/changed-files,
+# CVE-2025-30066) but freezes them until something updates them deliberately.
+# This is that something.
+#
+# Note what is deliberately NOT here: the artifacts the formulae install. Those
+# are not Dependabot's to manage — their integrity is enforced by
+# .github/workflows/formula-integrity.yml, which checks the pinned digest and
+# verifies upstream's SLSA provenance on every change and weekly thereafter.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore(actions)"

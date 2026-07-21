@@ -1,0 +1,50 @@
+# sscsb: CodeQL — deep interprocedural analysis on PRs and the default branch.
+#
+# `ruby` was added to sscsb's stock `actions`-only matrix: this repo's source is
+# Ruby (the formulae and scripts/verify-formula-artifacts.rb), and CodeQL that
+# does not read your source code is not analysing your source code.
+#
+# Calibration note: CodeQL's Ruby extractor understands Ruby syntax but knows
+# nothing of the Homebrew Formula DSL, so it will not reason about `url`/`sha256`
+# semantics. It is here to catch ordinary Ruby defects — command injection in an
+# install block, unsafe deserialisation, tainted path construction — not to
+# validate formula correctness. That is what formula-integrity.yml and
+# `brew audit` are for.
+name: CodeQL
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  schedule:
+    - cron: "45 3 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["actions", "ruby"]
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        with:
+          languages: ${{ matrix.language }}
+      - name: Analyze
+        uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        with:
+          category: "/language:${{ matrix.language }}"

@@ -1,0 +1,16 @@
+# Formula files are executable Ruby that runs on users' machines during
+# `brew install`, and the url/sha256 pair in each one decides which bytes get
+# installed. They are the most security-sensitive files in this repository and
+# every change to them requires an owner's review.
+#
+# The security-relevant CI — artifact integrity, provenance verification, the
+# signing policy — is owned for the same reason: weakening a gate must be as
+# reviewable as bypassing it.
+
+*                                   @p4gs
+
+/Formula/                           @p4gs
+/scripts/verify-formula-artifacts.rb @p4gs
+/.github/workflows/                 @p4gs
+/.github/CODEOWNERS                 @p4gs
+/.sscsb/                            @p4gs
