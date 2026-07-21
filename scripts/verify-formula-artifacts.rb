@@ -1,5 +1,15 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# rubocop:disable all
+#
+# `brew test-bot --only-tap-syntax` runs `brew style` (Homebrew's RuboCop) over
+# EVERY Ruby file in the tap, including this one. Those cops are tuned for the
+# Homebrew formula DSL — double-quoted strings, 118-char lines — and are the
+# wrong ruler for a standalone 500-line supply-chain verification CLI. This file
+# is not unverified: it has a behavioural gate (formula-integrity.yml runs it
+# against the real release and six exploit formulae) plus a `ruby -c` syntax
+# check. A tap `.rubocop.yml` Exclude does NOT work here (brew style force-lints
+# tap Ruby regardless), so cops are disabled at the file level instead.
 
 # verify-formula-artifacts — the tap's artifact-integrity gate.
 #
@@ -270,7 +280,12 @@ def download(url, dest, quiet: false)
 end
 
 def tool?(name)
-  system('command', '-v', name, out: File::NULL, err: File::NULL)
+  # PATH-native so it is correct on every runner. (`system('command', '-v', …)`
+  # execs a nonexistent `command` binary on Linux — it is a shell builtin, not an
+  # executable — and would falsely report every tool missing.)
+  ENV['PATH'].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+    File.executable?(File.join(dir, name))
+  end
 end
 
 puts "verify-formula-artifacts — #{options[:formulae].length} formula(e)"
