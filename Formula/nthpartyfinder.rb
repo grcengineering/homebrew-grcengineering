@@ -6,34 +6,36 @@
 # by scripts/sync-homebrew-formula.sh once a release with matching tarballs actually
 # exists (placeholders fail `brew install`/`brew audit` loudly, which is the correct
 # failure mode for a placeholder rather than silently installing garbage).
+#
+# The formula dependencies `subfinder` and `whois` install automatically (both platforms), and the
+# binary ships every data file it needs embedded, so no config directory is required. A browser
+# (Chrome/Chromium/Edge) is NOT a formula dependency — Homebrew formulae cannot depend on a cask,
+# and a browser isn't needed for the default run. Instead the binary handles it at runtime: the
+# first scan that needs a browser and finds none offers to install one for the user's platform
+# (`--install-browser` skips the prompt), and any existing browser is detected and used. See
+# `caveats`.
 class Nthpartyfinder < Formula
-  desc "Identify Nth-party vendor relationships through DNS analysis"
+  desc "CLI tool for identifying Nth party vendor relationships through DNS analysis"
   homepage "https://grc.engineering"
+  # No explicit `version`: Homebrew scans it from the release URL's `/vX.Y.Z/` path, and an explicit
+  # `version` that matches is a `brew audit` error (redundant-with-URL). sync-homebrew-formula.sh
+  # bumps the version by rewriting the URL path, so the version tracks the URL automatically.
   license "MIT"
 
-  # Lets `brew livecheck` and bump tooling see new upstream versions. The Git
-  # strategy reads tags directly rather than scraping the releases page, which
-  # Homebrew prefers: not rate-limited, and a pre-release cannot push the current
-  # stable off the first page of results.
-  livecheck do
-    url :stable
-    strategy :git
-    regex(/^v?(\d+(?:\.\d+)+)$/i)
-  end
-
+  depends_on "subfinder"
   depends_on "whois"
 
   if OS.mac?
     if Hardware::CPU.arm?
-      url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.4.0/nthpartyfinder-aarch64-apple-darwin.tgz"
-      sha256 "2b214219aaa6a074e0d8933b1f448eacbcbb66c435bba3ce8e0f991c89640bd0"
+      url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.6.0/nthpartyfinder-aarch64-apple-darwin.tgz"
+      sha256 "b8211856656dc9299a754e527893ea59bedc84d6c4dbf5a91ac88ae5bd3ba348"
     else
-      url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.4.0/nthpartyfinder-x86_64-apple-darwin.tgz"
-      sha256 "4a28b57cde7bb0a655fa24ab7a85e2bf1af1b0911e1e0509e1cc0245e9bde338"
+      url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.6.0/nthpartyfinder-x86_64-apple-darwin.tgz"
+      sha256 "57913e26eaef3811279d5a0654a883ebf3ef5806f93cd1c57b74f93b66680671"
     end
   elsif OS.linux?
-    url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.4.0/nthpartyfinder-x86_64-unknown-linux-gnu.tgz"
-    sha256 "e42a07acbd52a5f1af451cd9c39b3db05c8a9d60f81949c9c4671e7d2a653955"
+    url "https://github.com/grcengineering/nthpartyfinder/releases/download/v1.6.0/nthpartyfinder-x86_64-unknown-linux-gnu.tgz"
+    sha256 "c180a2b90b855c0a020f02fa6f49c087f9a3fbeccca7c45142d2e874f87b7ba3"
   end
 
   def install
@@ -42,13 +44,15 @@ class Nthpartyfinder < Formula
 
   def caveats
     <<~EOS
-      Optional dependencies for full functionality:
+      subfinder and whois were installed automatically, and all data files are embedded in the
+      binary — nthpartyfinder is ready to use.
 
-      For web content analysis (--enable-web-org, --enable-web-traffic-discovery):
-        brew install --cask google-chrome
-
-      For subdomain discovery (--enable-subdomain-discovery):
-        brew install subfinder
+      The browser-based discovery methods (web-content, web-traffic, and subprocessor-render) use
+      Chrome, Chromium, or Edge. You do not need to install one now: the first scan that needs a
+      browser and finds none will offer to install one for you (Google Chrome via Homebrew here on
+      macOS; Chromium via your package manager on Linux). Pass --install-browser to install without
+      prompting in unattended runs, or decline the prompt and those phases run with reduced coverage
+      — the scan never hangs. Any browser you already have is detected and used automatically.
     EOS
   end
 
