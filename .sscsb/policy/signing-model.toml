@@ -17,3 +17,31 @@
 # [cloud-claude]
 # github_app_installed = "YYYY-MM-DD"     # authorized the Claude GitHub App (not a personal token)
 # signing_mode = "app-signed"             # app-signed | unsigned-drafts
+
+# ── Why every lane below is still unattested (recorded 2026-09-12) ──
+#
+# `sscsb verify signing-model` reports DEGRADED for this repository, and that is a
+# deliberate, documented state rather than an oversight. An attestation here is a
+# dated assertion of fact; writing one that has not happened would turn a control
+# into a lie, which is the one failure mode this file exists to prevent.
+#
+# github-web (vigilant_mode, phishing_resistant_mfa) and codespaces
+# (gpg_verification) are settings on the maintainer's GitHub ACCOUNT with no read
+# API — sscsb cannot probe them and neither can this repository. Only the account
+# holder can run `sscsb signing setup <lane> --confirm`, and only after actually
+# performing the steps. Nothing in CI or in this repo can close these.
+#
+# agent-claude-code and cloud-claude both want a DISTINCT AI signing identity
+# (a GIT_CONFIG_* env block for the local agent; a repo-level .claude/settings.json
+# for cloud containers) so agent commits do not inherit the human's identity. That
+# is good advice in general and it is NOT what this maintainer's standing policy
+# says: as of 2026-08-02 there is exactly one signer across every repository and
+# every machine — the human's 1Password-vaulted key in .sscsb/policy/signers.toml —
+# and the separate agent identity was explicitly retired. Converging these two lanes
+# would re-create the identity sscsb is asking for by contradicting the policy that
+# removed it, so they stay open by decision.
+#
+# The control that actually keeps an agent off `main` here is not this file: it is
+# `agent-signing = false` in config.toml, which emits no class="ai" key into
+# allowed_signers at all, plus branch protection requiring signed commits and pull
+# requests. An AI signature cannot be made verification-valid on this repo.

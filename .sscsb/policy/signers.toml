@@ -10,7 +10,9 @@
 # which is exactly the diff an attacker wants merged and exactly the diff that
 # looks most boring to a reviewer. Requiring a hardware-backed human signature
 # on every such commit is the control that makes an automated path, or a stolen
-# credential, insufficient on its own.
+# credential, insufficient on its own. The current key is device-auth-gated rather
+# than hardware-resident (see the signer entry below) — that is a recorded gap with
+# a named remediation, not a silent one.
 #
 # AI agents draft changes here; they do not sign them. The `agent-signing`
 # control is off, so no `class = "ai"` key is emitted into allowed_signers at
@@ -20,8 +22,30 @@
 [[signer]]
 principal = "10093271+p4gs@users.noreply.github.com"
 class = "human"
-# Apple Secure Enclave via Secretive. The private key is non-exportable and
-# every signature requires a physical Touch ID tap, so a signed commit here
-# carries evidence that a specific human was present at signing time.
-hardware_backed = true
-ssh_public_key = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJ6+H5pdok/8I/b+254AhexNJmkzfwCI7wnBqi6LLwkKIHLxcjy9ADFYuhK9fvKKshsu9Ld2e0YRs8BbvF4zUHM= Git-Signing@secretive.mbp.local"
+# Active human signer since 2026-08-02: the 1Password-vaulted ed25519 key
+# ("GitHub Signing Key (p4gs)"), signed through 1Password's op-ssh-sign and
+# registered on GitHub as a signing key.
+#
+# This file previously listed an Apple Secure Enclave key (ecdsa-sha2-nistp256,
+# Git-Signing@secretive.mbp.local) that was RETIRED on 2026-08-02. That left this
+# policy unable to validate a single commit signed since — `sscsb hook pre-push`
+# rejects with "signature cannot be validated against approved signers (status E)"
+# for exactly that reason. An approved-signers list that does not contain the key
+# doing the signing is not a strict policy, it is a broken one.
+#
+# The retired key is deliberately NOT carried here: this file governs which keys
+# may LAND a commit, not which historical signatures still verify. Verifying
+# pre-August commits is the job of the machine-global ~/.ssh/allowed_signers,
+# which keeps the retired key, annotated as retired, for precisely that purpose.
+#
+# hardware_backed = false is the honest value, and honest is the point. The private
+# key is stored encrypted in the 1Password vault and every signature requires a
+# device unlock (Touch ID / system auth), which is real presence evidence — but the
+# key is not resident on a security key, it is not an `ssh-ed25519-sk` credential,
+# and it is exportable from the vault. Declaring it hardware-backed would attest a
+# property it does not have. `require_hardware_backed = true` stays set in
+# config.toml as the standing target: the remediation is a YubiKey `-sk` key, not a
+# truer-sounding flag in this file.
+backend = "software"
+hardware_backed = false
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBxEAReKc/G/sUxY/UbXprOccUKaxhd+sr/7Gbb40u9w github-signing@1password.p4gs"
