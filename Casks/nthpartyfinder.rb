@@ -34,9 +34,10 @@ cask "nthpartyfinder" do
   depends_on formula: "whois"
   # macOS-only: the artifact is a -apple-darwin binary, so `brew readall --os=all` (run by the
   # tap's test-bot) requires an explicit macOS declaration — without it the Linux simulation
-  # leaves sha256 nil and the audit fails. Symbol form (`:big_sur`), not the deprecated string
-  # comparison form.
-  depends_on macos: :big_sur
+  # leaves sha256 nil and the audit fails. Plain `:macos`, not a minimum version: Homebrew's
+  # `Homebrew/OSDependsOn` cop rejects `macos: :big_sur` as redundant: Big Sur is the oldest
+  # macOS Homebrew still recognises, so that minimum excludes nothing.
+  depends_on :macos
 
   binary "nthpartyfinder"
 
