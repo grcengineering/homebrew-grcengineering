@@ -15,12 +15,25 @@ github_repo = "grcengineering/homebrew-grcengineering"
 
 # ── Phase 1 — Local source integrity ──
 
-# Secret scanning hooks: TruffleHog + Gitleaks block secrets at pre-commit and pre-push
+# Secret scanning hooks: TruffleHog and Gitleaks both block secrets at pre-commit
+# and pre-push.
+#
+# Both run, deliberately. TruffleHog VERIFIES a candidate credential against the
+# issuing provider, so it can tell "this looks like a key" apart from "this key is
+# live right now" (`--results=verified,unknown` keeps unverifiable candidates in
+# scope). Gitleaks runs alongside it: independent probes showed it catches generic
+# secrets (e.g. `api_key = "<random>"`) and unverifiable keys that TruffleHog's
+# verified/unknown filter still drops — a detection class TruffleHog alone does
+# not cover.
 [controls.secrets]
 enabled = true
 trufflehog = true
 gitleaks = true
 pre_push_range_scan = true
+# sscsb 0.4.0 writes the sample `.gitleaks.toml` whenever the `secrets` control is
+# enabled. With `gitleaks = true` that file is live config for the engine actually
+# running here, not an orphan — review and maintain it like any other scanner
+# config; don't delete it.
 
 # CommitSigningGuard: Hardware-backed, human-only signing enforced on protected branches at pre-push
 [controls.commit-signing]
@@ -36,10 +49,12 @@ allowed_backends = ["github-app", "tpm", "fido2", "kms", "piv", "software"]
 max_key_age_days = 90
 
 # Five-environment signing model: Machine-wide signing posture: human enclave lane, distinct agent identity, cloud/web/Codespaces guidance
+# Lane identities are not config keys in sscsb 0.4.0 — the human key lives in
+# .sscsb/policy/signers.toml and the un-probeable lanes (cloud / web / Codespaces)
+# are dated attestations in .sscsb/policy/signing-model.toml. Setting `agent` /
+# `human_backend` here was silently ignored on every run.
 [controls.signing-model]
 enabled = true
-agent = "claude-code"
-human_backend = "secretive"
 
 # Branch protection verification: Verify GitHub protected-branch rules (PRs, no force-push, signatures, checks)
 [controls.branch-protection]
@@ -110,18 +125,62 @@ enabled = false
 [controls.slsa-provenance]
 enabled = false
 
-# Provenance verification gates: slsa-verifier + cosign verification required before promote/deploy/publish
+# GitHub artifact attestations / GitHub SBOM attestation: DISABLED, and the reason is
+# structural rather than a deferral.
+#
+# Both controls install an `on: release published` workflow that builds something,
+# attests the bytes, and verifies the attestation. This repository is a Homebrew TAP:
+# it has no build, no tags and no releases (`gh release list` is empty, `git tag` is
+# empty), and it never will — it ships Ruby metadata describing artifacts that are
+# built, signed and attested in grcengineering/nthpartyfinder. Enabling them here
+# would add two workflows that either never fire, or, if a tag were ever cut, attest
+# a `git archive` tarball of the tap's own formula files. Attesting a stub is not
+# provenance; it is a green check over a claim nobody makes.
+#
+# The provenance question a tap actually has to answer — "are the bytes this formula
+# points at the ones upstream built?" — is answered by formula-integrity.yml, which
+# downloads every (url, sha256) pair and verifies it against upstream's keyless
+# signing identity with cosign and slsa-verifier, pinned to the expected source repo
+# and tag, on every PR, every push to main, and weekly against already-merged
+# formulae. The `provenance-verify` control below is the sscsb control that gates it.
+#
+# Re-enable both the day this repo builds and publishes an artifact of its own.
+[controls.github-attestations]
+enabled = false
+
+[controls.sbom-attestation]
+enabled = false
+
+# Provenance verification gates: slsa-verifier + cosign verification required before
+# promote/deploy/publish. Enabled — but note that `sscsb init` writes a
+# `.github/workflows/deploy-gate.yml` for this control, and that workflow is
+# unreachable in a tap: its `workflow_call` entry is only invoked by a `release.yml`
+# this repo does not have, and its `workflow_dispatch` entry needs a published
+# release tag (this repo has none). It is deliberately not committed; delete it if a
+# future `sscsb init` puts it back. The verification that matters here runs in
+# formula-integrity.yml against UPSTREAM's artifacts, which is what a distribution
+# channel actually has to verify.
 [controls.provenance-verify]
 enabled = true
+# Without this, `sscsb provenance verify` accepts provenance from ANY builder
+# slsa-verifier trusts for the source repo — "something built this" rather than
+# "the builder we expect built this". Pinned to the builder that actually produced
+# the provenance the tap's formulae point at: read out of
+# grcengineering/nthpartyfinder v1.8.3's multiple.intoto.jsonl
+# (predicate https://slsa.dev/provenance/v0.2), not assumed.
+builder_id = "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v2.1.0"
 
 # Octo STS federation: Short-lived repo-scoped GitHub credentials replacing long-lived PATs
 [controls.octo-sts]
 enabled = false
 
 # Harden-Runner: StepSecurity Harden-Runner egress/tamper monitoring in every workflow
+# The egress policy itself is a per-workflow input (`with: egress-policy:`), not a
+# config key sscsb 0.4.0 reads; setting `egress_policy` here was silently ignored.
+# Every workflow in this repo runs harden-runner in `audit` mode — the audit output
+# is the input to a future `block` allowlist.
 [controls.harden-runner]
 enabled = true
-egress_policy = "audit"
 
 # Witness (optional): Richer in-toto attestation capture and policy around build steps
 [controls.witness]
