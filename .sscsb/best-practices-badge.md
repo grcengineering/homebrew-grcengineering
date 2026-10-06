@@ -28,7 +28,7 @@ unearned assurance this whole tap exists to prevent.
 | Static analysis (SAST) applied | `sast` (OpenGrep, `.github/workflows/sast-opengrep.yml`) + `codeql` (`actions` and `ruby` extractors) | ☑ |
 | Vulnerability scanning of dependencies | n/a — the only dependency surface this repo owns is its GitHub Actions, which are SHA-pinned (`actions-audit`) and updated by Dependabot. There are no lockfiles or package manifests to scan; `vuln-scan` is off for that reason. | ☑ (n/a) |
 | No unpatched medium+/high vulns | n/a, same reason as the row above | ☑ (n/a) |
-| Secrets not committed; scanned | `secrets` — TruffleHog at pre-commit, pre-push and in CI over full history (`.github/workflows/secrets-scan.yml`) | ☑ |
+| Secrets not committed; scanned | `secrets` — TruffleHog + Gitleaks at pre-commit, pre-push and in CI over full history (`.github/workflows/secrets-scan.yml`) | ☑ |
 | Vulnerability reporting process documented | `SECURITY.md` + private GitHub Security Advisories | ☑ |
 | Cryptographic signing of releases | n/a — this tap publishes no releases. What it does instead is the harder half: `formula-integrity.yml` verifies UPSTREAM's Sigstore/SLSA signatures for every artifact a formula points at, pinned to the expected source repo and tag, on every PR, every push to `main`, and weekly. | ☑ (n/a) |
 | Delivery over TLS / pinned deps | all actions SHA-pinned (`actions-audit`, `workflow-audit-extended`); all formula URLs are HTTPS with pinned `sha256` | ☑ |

@@ -15,24 +15,25 @@ github_repo = "grcengineering/homebrew-grcengineering"
 
 # ── Phase 1 — Local source integrity ──
 
-# Secret scanning hooks: TruffleHog blocks secrets at pre-commit and pre-push.
+# Secret scanning hooks: TruffleHog and Gitleaks both block secrets at pre-commit
+# and pre-push.
 #
-# TruffleHog ONLY, deliberately. Gitleaks used to run alongside it here and has been
-# removed. Both are pattern/entropy engines over the same diff, but TruffleHog also
-# VERIFIES a candidate credential against the issuing provider, so it can tell
-# "this looks like a key" apart from "this key is live right now". A second,
-# non-verifying engine adds duplicate findings and a second allowlist file to
-# maintain — a second place to create a blind spot — without adding a detection
-# class TruffleHog lacks. One scanner, the one whose hits can be proven.
+# Both run, deliberately. TruffleHog VERIFIES a candidate credential against the
+# issuing provider, so it can tell "this looks like a key" apart from "this key is
+# live right now" (`--results=verified,unknown` keeps unverifiable candidates in
+# scope). Gitleaks runs alongside it: independent probes showed it catches generic
+# secrets (e.g. `api_key = "<random>"`) and unverifiable keys that TruffleHog's
+# verified/unknown filter still drops — a detection class TruffleHog alone does
+# not cover.
 [controls.secrets]
 enabled = true
 trufflehog = true
-gitleaks = false
+gitleaks = true
 pre_push_range_scan = true
-# NOTE for whoever runs `sscsb init` next: sscsb 0.4.0 writes the sample
-# `.gitleaks.toml` whenever the `secrets` control is enabled, without consulting the
-# `gitleaks` toggle above. If that file reappears, delete it — it is a scanner config
-# for an engine this repo does not run, and leaving it implies a control that is off.
+# sscsb 0.4.0 writes the sample `.gitleaks.toml` whenever the `secrets` control is
+# enabled. With `gitleaks = true` that file is live config for the engine actually
+# running here, not an orphan — review and maintain it like any other scanner
+# config; don't delete it.
 
 # CommitSigningGuard: Hardware-backed, human-only signing enforced on protected branches at pre-push
 [controls.commit-signing]

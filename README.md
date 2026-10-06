@@ -67,7 +67,7 @@ stated plainly so the guarantee isn't misread.
 | **Weekly re-verification** | Merged formulae are re-checked on a schedule, so an asset swapped or re-pointed *after* review is caught. This is detection (≤1 week exposure), not prevention. |
 | **Human-only signing** | Protected-branch commits require a hardware-backed human signature. No AI key is registered, so an AI signature cannot be valid here. |
 | **Formula correctness** | `brew test-bot` runs `brew style` and `brew audit`, and builds/tests changed formulae on PRs across macOS x86_64, macOS arm64, and Linux — an authoritative per-platform fetch that resolves the artifact the way Homebrew actually will. |
-| **Everything else** | SHA-pinned actions with least-privilege `permissions:`, Harden-Runner on every job, TruffleHog secret scanning (verified-credential detection; the single scanner, not one of two), OpenGrep SAST (extended to Ruby), CodeQL, OpenSSF Scorecard, Dependabot for the actions the workflows call. |
+| **Everything else** | SHA-pinned actions with least-privilege `permissions:`, Harden-Runner on every job, TruffleHog + Gitleaks, OpenGrep SAST (extended to Ruby), CodeQL, OpenSSF Scorecard, Dependabot for the actions the workflows call. |
 
 **What it does not do:** none of the above proves a formula's install code is
 *safe* — provenance and digests are about the tarball's bytes, not what the
